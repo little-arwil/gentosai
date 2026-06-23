@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gentosai SchoolOS
 
-## Getting Started
+Gentosai SchoolOS adalah prototype lokal untuk sistem operasional sekolah: data siswa, guru, kelas, absensi, jadwal, nilai, rapor sederhana, SPP, dashboard kepala sekolah, dan early warning system.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 App Router
+- TypeScript
+- Tailwind CSS 4
+- Prisma 7
+- SQLite untuk development lokal
+- Driver adapter `@prisma/adapter-better-sqlite3`
+
+## Fitur MVP Saat Ini
+
+- Dashboard sekolah real-time dari database lokal.
+- Mode role demo: kepala sekolah, admin, guru, wali kelas, keuangan, BK, orang tua, siswa.
+- Data master: siswa, wali, guru, kelas, mapel.
+- Form tambah siswa, guru, dan kelas.
+- Input absensi harian dengan status hadir, sakit, izin, alpha, terlambat.
+- Input nilai per siswa, mapel, guru, dan penilaian.
+- Tagihan SPP, pembayaran, status lunas/cicilan/tunggakan.
+- Early warning siswa berisiko berdasarkan absensi, nilai rendah, tunggakan, dan catatan negatif.
+- Jadwal pelajaran, pengumuman, catatan BK, dan ringkasan rapor sederhana.
+
+## Cara Menjalankan Lokal
 
 ```bash
+cd /home/acer/gentosai
+npm install
+npm run db:push
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Script Penting
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev       # menjalankan server development
+npm run build     # validasi production build
+npm run lint      # cek linting
+npm run db:push   # sinkron schema Prisma ke SQLite
+npm run db:seed   # reset dan isi data demo
+npm run db:studio # buka Prisma Studio
+```
 
-## Learn More
+## Database Lokal
 
-To learn more about Next.js, take a look at the following resources:
+- File database: `dev.db`
+- Konfigurasi environment: `.env`
+- Contoh environment: `.env.example`
+- Schema utama: `prisma/schema.prisma`
+- Data demo: `prisma/seed.cjs`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Untuk reset data demo:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run db:push
+npm run db:seed
+```
 
-## Deploy on Vercel
+## Catatan Auth
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+MVP ini memakai role switcher berbasis cookie untuk demo alur kerja. Ini belum auth production. Tahap production harus menambahkan login aman, password hashing, session management, RBAC detail, audit log, dan proteksi server action.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Push ke GitHub Nanti
+
+Setelah GitHub CLI atau repo kosong siap:
+
+```bash
+cd /home/acer/gentosai
+git status
+git add .
+git commit -m "Initial Gentosai SchoolOS MVP"
+git branch -M main
+git remote add origin <URL_REPO_GITHUB_KAMU>
+git push -u origin main
+```
+
+Kalau `gh` sudah terpasang dan login:
+
+```bash
+gh auth login
+gh repo create gentosai --private --source=. --remote=origin --push
+```
+
+## Roadmap Singkat
+
+1. Stabilkan MVP: validasi form, edit/hapus data, filter tabel, dan export Excel/PDF.
+2. Auth production: login, permission per role, audit log, dan proteksi route.
+3. Akademik lengkap: bank soal, tugas, ujian, bobot nilai, rapor PDF.
+4. Keuangan lengkap: invoice massal, diskon/beasiswa, payment gateway, reminder WhatsApp.
+5. Parent/student portal: PWA khusus orang tua dan siswa.
+6. AI assistant: ringkasan siswa, deskripsi rapor, generator surat, dan query dashboard natural language.
+7. Deployment: PostgreSQL, object storage, backup otomatis, monitoring, dan CI/CD.
