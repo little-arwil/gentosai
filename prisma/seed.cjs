@@ -1,8 +1,18 @@
 const { PrismaClient } = require("@prisma/client");
 const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+const { randomBytes, scryptSync } = require("node:crypto");
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL || "file:./dev.db" });
 const prisma = new PrismaClient({ adapter });
+const DEMO_PASSWORD = "password123";
+
+function hashPassword(password) {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+const demoPasswordHash = hashPassword(DEMO_PASSWORD);
 
 const daysFromNow = (days) => {
   const date = new Date();
@@ -31,6 +41,7 @@ async function reset() {
   await prisma.teacher.deleteMany();
   await prisma.semester.deleteMany();
   await prisma.academicYear.deleteMany();
+  await prisma.session.deleteMany();
   await prisma.user.deleteMany();
   await prisma.school.deleteMany();
 }
@@ -76,14 +87,15 @@ async function main() {
       name: "Dr. Rania Maheswari",
       email: "kepsek@gentosai.sch.id",
       role: "PRINCIPAL",
+      passwordHash: demoPasswordHash,
     },
   });
 
   await prisma.user.createMany({
     data: [
-      { schoolId: school.id, name: "Admin Sekolah", email: "admin@gentosai.sch.id", role: "ADMIN" },
-      { schoolId: school.id, name: "Nadia Keuangan", email: "finance@gentosai.sch.id", role: "FINANCE" },
-      { schoolId: school.id, name: "Bima BK", email: "bk@gentosai.sch.id", role: "COUNSELOR" },
+      { schoolId: school.id, name: "Admin Sekolah", email: "admin@gentosai.sch.id", role: "ADMIN", passwordHash: demoPasswordHash },
+      { schoolId: school.id, name: "Nadia Keuangan", email: "finance@gentosai.sch.id", role: "FINANCE", passwordHash: demoPasswordHash },
+      { schoolId: school.id, name: "Bima BK", email: "bk@gentosai.sch.id", role: "COUNSELOR", passwordHash: demoPasswordHash },
     ],
   });
 
@@ -94,7 +106,7 @@ async function main() {
       ["Dewi Larasati", "dewi@gentosai.sch.id", "IPA"],
       ["Raka Fadillah", "raka@gentosai.sch.id", "Sejarah"],
     ].map(([name, email]) =>
-      prisma.user.create({ data: { schoolId: school.id, name, email, role: "TEACHER" } }),
+      prisma.user.create({ data: { schoolId: school.id, name, email, role: "TEACHER", passwordHash: demoPasswordHash } }),
     ),
   );
 
@@ -166,17 +178,23 @@ async function main() {
   ];
 
   const guardians = await Promise.all(
-    guardianData.map(([name, phone, occupation], index) =>
-      prisma.guardian.create({
+    guardianData.map(async ([name, phone, occupation], index) => {
+      const email = `wali${index + 1}@example.com`;
+      const user = await prisma.user.create({
+        data: { schoolId: school.id, name, email, role: "GUARDIAN", passwordHash: demoPasswordHash },
+      });
+
+      return prisma.guardian.create({
         data: {
           schoolId: school.id,
+          userId: user.id,
           name,
           phone,
-          email: `wali${index + 1}@example.com`,
+          email,
           occupation,
         },
-      }),
-    ),
+      });
+    }),
   );
 
   const studentRows = [
@@ -199,6 +217,7 @@ async function main() {
         name,
         email: `${String(name).toLowerCase().replaceAll(" ", ".")}@siswa.gentosai.sch.id`,
         role: "STUDENT",
+        passwordHash: demoPasswordHash,
       },
     });
 
@@ -337,7 +356,7 @@ async function main() {
     });
   }
 
-  console.log(`Seed completed for ${school.name}. Principal demo: ${principalUser.email}`);
+  console.log(`Seed completed for ${school.name}. Principal demo: ${principalUser.email} / ${DEMO_PASSWORD}`);
 }
 
 main()

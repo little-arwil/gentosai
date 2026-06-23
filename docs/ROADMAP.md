@@ -50,6 +50,8 @@ Definition of Done:
 
 Target: aman untuk data nyata.
 
+Status saat ini: login, password hash, session cookie HTTP-only, session table, logout, guard halaman utama, dan role check server action sudah tersedia sebagai fondasi awal.
+
 1. Login dengan email/password.
 2. Password hashing dan reset password.
 3. Session management.

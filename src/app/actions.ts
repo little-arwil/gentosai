@@ -1,10 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import type { AttendanceStatus, PaymentStatus, UserRole } from "@prisma/client";
+import type { AttendanceStatus, PaymentStatus } from "@prisma/client";
+import { hashPassword, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ROLE_COOKIE, roleLabels } from "@/lib/role";
+
+const DEFAULT_NEW_USER_PASSWORD = "password123";
+const MANAGE_MASTER_ROLES = ["SUPER_ADMIN", "PRINCIPAL", "ADMIN"] as const;
+const ACADEMIC_ROLES = ["SUPER_ADMIN", "PRINCIPAL", "ADMIN", "TEACHER", "HOMEROOM"] as const;
+const FINANCE_ROLES = ["SUPER_ADMIN", "PRINCIPAL", "ADMIN", "FINANCE"] as const;
 
 function readText(formData: FormData, key: string) {
   const value = formData.get(key)?.toString().trim();
@@ -31,8 +35,9 @@ function readDate(formData: FormData, key: string) {
   return new Date(`${readText(formData, key)}T00:00:00`);
 }
 
-async function getSchoolContext() {
-  const school = await prisma.school.findFirst({
+async function getSchoolContext(schoolId: string) {
+  const school = await prisma.school.findUnique({
+    where: { id: schoolId },
     include: {
       academicYears: {
         where: { isActive: true },
@@ -52,32 +57,22 @@ async function getSchoolContext() {
   return { school, academicYear, semester };
 }
 
-export async function setActiveRole(formData: FormData) {
-  const role = readText(formData, "role") as UserRole;
-  if (!(role in roleLabels)) {
-    throw new Error("Role tidak dikenal");
-  }
-
-  const cookieStore = await cookies();
-  cookieStore.set(ROLE_COOKIE, role, {
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 30,
-    path: "/",
-    sameSite: "lax",
-  });
-
-  revalidatePath("/");
-}
-
 export async function createTeacher(formData: FormData) {
-  const { school } = await getSchoolContext();
+  const actor = await requireRole([...MANAGE_MASTER_ROLES]);
+  const { school } = await getSchoolContext(actor.schoolId);
   const name = readText(formData, "teacherName");
   const email = readText(formData, "teacherEmail").toLowerCase();
   const specialty = readOptionalText(formData, "specialty");
 
   await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
-      data: { schoolId: school.id, name, email, role: "TEACHER" },
+      data: {
+        schoolId: school.id,
+        name,
+        email,
+        role: "TEACHER",
+        passwordHash: hashPassword(DEFAULT_NEW_USER_PASSWORD),
+      },
     });
 
     await tx.teacher.create({
@@ -97,7 +92,8 @@ export async function createTeacher(formData: FormData) {
 }
 
 export async function createClass(formData: FormData) {
-  const { school, academicYear } = await getSchoolContext();
+  const actor = await requireRole([...MANAGE_MASTER_ROLES]);
+  const { school, academicYear } = await getSchoolContext(actor.schoolId);
   const homeroomTeacherId = readOptionalText(formData, "homeroomTeacherId");
 
   await prisma.schoolClass.create({
@@ -116,18 +112,34 @@ export async function createClass(formData: FormData) {
 }
 
 export async function createStudent(formData: FormData) {
-  const { school } = await getSchoolContext();
+  const actor = await requireRole([...MANAGE_MASTER_ROLES]);
+  const { school } = await getSchoolContext(actor.schoolId);
   const name = readText(formData, "studentName");
   const nis = readText(formData, "nis");
   const classId = readText(formData, "classId");
+  const guardianName = readText(formData, "guardianName");
+  const guardianEmail = readOptionalText(formData, "guardianEmail");
 
   await prisma.$transaction(async (tx) => {
+    const guardianUser = guardianEmail
+      ? await tx.user.create({
+          data: {
+            schoolId: school.id,
+            name: guardianName,
+            email: guardianEmail.toLowerCase(),
+            role: "GUARDIAN",
+            passwordHash: hashPassword(DEFAULT_NEW_USER_PASSWORD),
+          },
+        })
+      : null;
+
     const guardian = await tx.guardian.create({
       data: {
         schoolId: school.id,
-        name: readText(formData, "guardianName"),
+        userId: guardianUser?.id,
+        name: guardianName,
         phone: readText(formData, "guardianPhone"),
-        email: readOptionalText(formData, "guardianEmail"),
+        email: guardianEmail,
         occupation: readOptionalText(formData, "guardianOccupation"),
       },
     });
@@ -138,6 +150,7 @@ export async function createStudent(formData: FormData) {
         name,
         email: `${nis.toLowerCase()}@siswa.gentosai.local`,
         role: "STUDENT",
+        passwordHash: hashPassword(DEFAULT_NEW_USER_PASSWORD),
       },
     });
 
@@ -164,6 +177,7 @@ export async function createStudent(formData: FormData) {
 }
 
 export async function recordAttendance(formData: FormData) {
+  await requireRole([...ACADEMIC_ROLES]);
   const [studentId, classId] = readText(formData, "attendanceStudentRef").split(":");
   const date = readDate(formData, "attendanceDate");
   const status = readText(formData, "attendanceStatus") as AttendanceStatus;
@@ -188,7 +202,8 @@ export async function recordAttendance(formData: FormData) {
 }
 
 export async function createGrade(formData: FormData) {
-  const { semester } = await getSchoolContext();
+  const actor = await requireRole([...ACADEMIC_ROLES]);
+  const { semester } = await getSchoolContext(actor.schoolId);
   const studentId = readText(formData, "gradeStudentId");
   const subjectId = readText(formData, "subjectId");
   const teacherId = readText(formData, "gradeTeacherId");
@@ -209,7 +224,8 @@ export async function createGrade(formData: FormData) {
 }
 
 export async function createInvoice(formData: FormData) {
-  const { school } = await getSchoolContext();
+  const actor = await requireRole([...FINANCE_ROLES]);
+  const { school } = await getSchoolContext(actor.schoolId);
   const studentId = readText(formData, "invoiceStudentId");
   const classId = readOptionalText(formData, "invoiceClassId");
   const dueDate = readDate(formData, "dueDate");
@@ -232,6 +248,7 @@ export async function createInvoice(formData: FormData) {
 }
 
 export async function recordPayment(formData: FormData) {
+  await requireRole([...FINANCE_ROLES]);
   const invoiceId = readText(formData, "paymentInvoiceId");
   const amount = readNumber(formData, "paymentAmount");
   const paidAt = readDate(formData, "paidAt");

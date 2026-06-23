@@ -1,4 +1,5 @@
-import type { AttendanceStatus, PaymentStatus, UserRole } from "@prisma/client";
+import type { AttendanceStatus, PaymentStatus, Prisma, UserRole } from "@prisma/client";
+import { redirect } from "next/navigation";
 import {
   createClass,
   createGrade,
@@ -7,11 +8,12 @@ import {
   createTeacher,
   recordAttendance,
   recordPayment,
-  setActiveRole,
 } from "./actions";
+import { logout } from "./auth-actions";
 import { attendanceLabels, formatCurrency, formatDate, formatPercent, paymentLabels, toDateInputValue } from "@/lib/format";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getActiveRole, roleDescriptions, roleLabels, roleOrder } from "@/lib/role";
+import { roleDescriptions, roleLabels } from "@/lib/role";
 
 export const dynamic = "force-dynamic";
 
@@ -117,8 +119,15 @@ function Panel({ children, kicker, title }: { children: React.ReactNode; kicker:
 }
 
 export default async function Home() {
-  const activeRole = await getActiveRole();
-  const school = await prisma.school.findFirst({
+  const auth = await getCurrentUser();
+  if (!auth) {
+    redirect("/login");
+  }
+
+  const currentUser = auth.user;
+  const activeRole = currentUser.role as UserRole;
+  const school = await prisma.school.findUnique({
+    where: { id: currentUser.schoolId },
     include: {
       academicYears: {
         where: { isActive: true },
@@ -143,10 +152,21 @@ export default async function Home() {
   const semester = academicYear?.semesters[0];
   const today = startOfToday();
   const tomorrow = addDays(today, 1);
+  const scopedStudentWhere: Prisma.StudentWhereInput = {
+    schoolId: school.id,
+    status: "ACTIVE",
+    ...(activeRole === "STUDENT" ? { userId: currentUser.id } : {}),
+    ...(activeRole === "GUARDIAN" ? { guardian: { userId: currentUser.id } } : {}),
+  };
+  const scopedInvoiceWhere: Prisma.InvoiceWhereInput = {
+    schoolId: school.id,
+    ...(activeRole === "STUDENT" || activeRole === "GUARDIAN" ? { student: scopedStudentWhere } : {}),
+  };
+  const scopedStudentRelationWhere = activeRole === "STUDENT" || activeRole === "GUARDIAN" ? { student: scopedStudentWhere } : {};
 
   const [students, teachers, classes, subjects, attendanceToday, invoices, schedules, grades, reportCards, notes, announcements] = await Promise.all([
     prisma.student.findMany({
-      where: { schoolId: school.id, status: "ACTIVE" },
+      where: scopedStudentWhere,
       include: {
         guardian: true,
         classMemberships: {
@@ -170,11 +190,11 @@ export default async function Home() {
     prisma.subject.findMany({ where: { schoolId: school.id }, orderBy: { name: "asc" } }),
     prisma.attendance.groupBy({
       by: ["status"],
-      where: { date: { gte: today, lt: tomorrow } },
+      where: { date: { gte: today, lt: tomorrow }, student: scopedStudentWhere },
       _count: { _all: true },
     }),
     prisma.invoice.findMany({
-      where: { schoolId: school.id },
+      where: scopedInvoiceWhere,
       include: { student: true, class: true, payments: { orderBy: { paidAt: "desc" } } },
       orderBy: [{ status: "asc" }, { dueDate: "asc" }],
     }),
@@ -183,12 +203,13 @@ export default async function Home() {
       orderBy: [{ dayOfWeek: "asc" }, { startsAt: "asc" }],
     }),
     prisma.grade.findMany({
+      where: scopedStudentRelationWhere,
       include: { student: true, subject: true, teacher: true },
       orderBy: { createdAt: "desc" },
       take: 12,
     }),
-    prisma.reportCard.findMany({ include: { student: true, semester: true }, orderBy: { averageScore: "desc" } }),
-    prisma.studentNote.findMany({ include: { student: true }, orderBy: { createdAt: "desc" }, take: 8 }),
+    prisma.reportCard.findMany({ where: scopedStudentRelationWhere, include: { student: true, semester: true }, orderBy: { averageScore: "desc" } }),
+    prisma.studentNote.findMany({ where: scopedStudentRelationWhere, include: { student: true }, orderBy: { createdAt: "desc" }, take: 8 }),
     prisma.announcement.findMany({ where: { schoolId: school.id }, orderBy: { publishedAt: "desc" }, take: 5 }),
   ]);
 
@@ -217,7 +238,6 @@ export default async function Home() {
   const riskStudents = activeStudents.filter((item) => item.riskScore > 0).sort((a, b) => b.riskScore - a.riskScore).slice(0, 5);
   const firstStudentRef = activeStudents.find((item) => item.activeClass)?.student.id;
   const firstClassRef = activeStudents.find((item) => item.activeClass)?.activeClass?.id;
-
   return (
     <main className="shell-grid min-h-screen p-4 text-[var(--ink)] md:p-8">
       <div className="mx-auto max-w-7xl">
@@ -248,18 +268,13 @@ export default async function Home() {
             </div>
 
             <aside className="rounded-[2rem] bg-[var(--paper)] p-5 text-[var(--ink)]">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--clay)]">Mode role demo</p>
-              <h2 className="display-font mt-2 text-3xl font-black text-[var(--forest)]">{roleLabels[activeRole]}</h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{roleDescriptions[activeRole]}</p>
-              <form action={setActiveRole} className="mt-5 grid gap-3">
-                <select name="role" defaultValue={activeRole} className={inputClass()}>
-                  {roleOrder.map((role) => (
-                    <option key={role} value={role}>
-                      {roleLabels[role]}
-                    </option>
-                  ))}
-                </select>
-                <Button>Aktifkan mode</Button>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--clay)]">Sesi aktif</p>
+              <h2 className="display-font mt-2 text-3xl font-black text-[var(--forest)]">{currentUser.name}</h2>
+              <p className="mt-2 text-sm font-bold text-[var(--clay)]">{currentUser.email}</p>
+              <Pill tone="mt-4 border-[var(--forest)] bg-white text-[var(--forest)]">{roleLabels[activeRole]}</Pill>
+              <p className="mt-4 text-sm leading-6 text-[var(--muted)]">{roleDescriptions[activeRole]}</p>
+              <form action={logout} className="mt-5">
+                <Button>Logout</Button>
               </form>
               <div className="mt-5 grid gap-2">
                 {roleFocus[activeRole].map((item) => (
@@ -439,7 +454,6 @@ export default async function Home() {
               <Button>Simpan nilai</Button>
             </form>
           </Panel>
-
           <Panel kicker="Keuangan" title="Buat tagihan SPP">
             <form action={createInvoice} className="grid gap-4">
               <Field label="Siswa">

@@ -1,7 +1,4 @@
-import { cookies } from "next/headers";
 import type { UserRole } from "@prisma/client";
-
-export const ROLE_COOKIE = "gentosai-role";
 
 export const roleLabels: Record<UserRole, string> = {
   SUPER_ADMIN: "Super Admin",
@@ -38,14 +35,3 @@ export const roleOrder: UserRole[] = [
   "STUDENT",
   "SUPER_ADMIN",
 ];
-
-export async function getActiveRole(): Promise<UserRole> {
-  const cookieStore = await cookies();
-  const value = cookieStore.get(ROLE_COOKIE)?.value as UserRole | undefined;
-
-  if (value && value in roleLabels) {
-    return value;
-  }
-
-  return "PRINCIPAL";
-}

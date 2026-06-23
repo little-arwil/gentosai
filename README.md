@@ -14,7 +14,8 @@ Gentosai SchoolOS adalah prototype lokal untuk sistem operasional sekolah: data 
 ## Fitur MVP Saat Ini
 
 - Dashboard sekolah real-time dari database lokal.
-- Mode role demo: kepala sekolah, admin, guru, wali kelas, keuangan, BK, orang tua, siswa.
+- Login dengan password hash dan session cookie HTTP-only.
+- Akun demo per role: kepala sekolah, admin, guru, keuangan, BK, orang tua, siswa.
 - Data master: siswa, wali, guru, kelas, mapel.
 - Form tambah siswa, guru, dan kelas.
 - Input absensi harian dengan status hadir, sakit, izin, alpha, terlambat.
@@ -34,6 +35,26 @@ npm run dev
 ```
 
 Buka `http://localhost:3000`.
+
+## Akun Demo
+
+Semua akun demo memakai password berikut:
+
+```text
+password123
+```
+
+Email yang bisa dipakai:
+
+```text
+kepsek@gentosai.sch.id
+admin@gentosai.sch.id
+maya@gentosai.sch.id
+finance@gentosai.sch.id
+bk@gentosai.sch.id
+wali1@example.com
+alya.putri@siswa.gentosai.sch.id
+```
 
 ## Script Penting
 
@@ -63,7 +84,7 @@ npm run db:seed
 
 ## Catatan Auth
 
-MVP ini memakai role switcher berbasis cookie untuk demo alur kerja. Ini belum auth production. Tahap production harus menambahkan login aman, password hashing, session management, RBAC detail, audit log, dan proteksi server action.
+MVP ini sudah memakai password hash, session table, session cookie HTTP-only, login/logout, dan guard halaman utama. Server action penting juga sudah dicek berdasarkan role. Tahap production tetap perlu menambahkan reset password, audit log lebih detail, validasi form berbasis schema, rate limit, dan hardening deployment.
 
 ## Push ke GitHub Nanti
 

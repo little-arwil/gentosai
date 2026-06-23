@@ -6,6 +6,7 @@ Database MVP dirancang sebagai fondasi SchoolOS. Saat development lokal memakai 
 
 - `School`: profil sekolah.
 - `User`: akun sistem dan role.
+- `Session`: sesi login berbasis token hash dan expiry.
 - `AcademicYear`: tahun ajaran.
 - `Semester`: semester aktif.
 - `Guardian`: orang tua atau wali siswa.
@@ -30,6 +31,7 @@ Database MVP dirancang sebagai fondasi SchoolOS. Saat development lokal memakai 
 ## Prinsip Relasi
 
 - Semua data utama terhubung ke `School` agar nanti bisa dikembangkan menjadi multi-sekolah.
+- `Session` hanya menyimpan hash token, bukan token mentah dari cookie.
 - Siswa tidak langsung menyimpan `classId`; kelas disimpan lewat `ClassMembership` supaya riwayat pindah kelas tetap aman.
 - Nilai selalu menyimpan `teacherId`, `subjectId`, dan `semesterId` supaya audit akademik jelas.
 - Tagihan menyimpan `amount`, `paidAmount`, dan `status` agar dashboard keuangan cepat dihitung.
