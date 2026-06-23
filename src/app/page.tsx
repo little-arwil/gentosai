@@ -72,39 +72,39 @@ function averageScore(scores: { score: number; weight: number }[]) {
 
 function Field({ children, label }: { children: React.ReactNode; label: string }) {
  return (
- <label className="grid gap-2 text-sm font-semibold text-[var(--ocean)]">
- <span>{label}</span>
- {children}
- </label>
+<label className="grid min-w-0 gap-2 text-sm font-semibold text-[var(--ocean)]">
+<span>{label}</span>
+{children}
+</label>
  );
 }
 
 function inputClass() {
- return "min-h-11 rounded-lg border border-[var(--line)] bg-white px-4 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[rgba(37,99,235,0.18)]";
+ return "min-h-11 w-full min-w-0 rounded-lg border border-[var(--line)] bg-white px-4 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[rgba(37,99,235,0.18)]";
 }
 
 function Button({ children }: { children: React.ReactNode }) {
  return (
- <button className="rounded-lg bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1d4ed8]">
- {children}
- </button>
+<button className="min-h-11 w-full rounded-lg bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] sm:w-auto">
+{children}
+</button>
  );
 }
 
 function Pill({ children, tone }: { children: React.ReactNode; tone?: string }) {
  return (
- <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${tone ?? "border-[var(--line)] bg-white text-[var(--muted)]"}`}>
- {children}
- </span>
+<span className={`inline-flex max-w-full items-center rounded-full border px-3 py-1 text-xs font-bold ${tone ?? "border-[var(--line)] bg-white text-[var(--muted)]"}`}>
+{children}
+</span>
  );
 }
 
 function MetricCard({ label, value, hint, accent }: { label: string; value: string; hint: string; accent: string }) {
  return (
- <section className="rounded-xl border border-[var(--line)] bg-white p-5">
+<section className="rounded-xl border border-[var(--line)] bg-white p-4 sm:p-5">
    <div className={`mb-5 h-1.5 w-12 rounded-full ${accent}`} />
    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">{label}</p>
-   <p className="mt-3 text-4xl font-bold tracking-tight text-[var(--ocean)]">{value}</p>
+   <p className="mt-3 text-3xl font-bold tracking-tight text-[var(--ocean)] md:text-4xl">{value}</p>
    <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{hint}</p>
  </section>
  );
@@ -112,9 +112,9 @@ function MetricCard({ label, value, hint, accent }: { label: string; value: stri
 
 function Panel({ children, kicker, title }: { children: React.ReactNode; kicker: string; title: string }) {
  return (
- <section className="rounded-xl border border-[var(--line)] bg-white p-5 md:p-7">
+<section className="rounded-xl border border-[var(--line)] bg-white p-4 sm:p-5 md:p-7">
    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--azure)]">{kicker}</p>
-   <h2 className="mt-2 text-2xl font-bold text-[var(--ocean)] md:text-[1.7rem]">{title}</h2>
+   <h2 className="mt-2 text-xl font-bold text-[var(--ocean)] sm:text-2xl md:text-[1.7rem]">{title}</h2>
    <div className="mt-6">{children}</div>
  </section>
  );
@@ -248,19 +248,19 @@ export default async function Home({
  const firstStudentRef = activeStudents.find((item) => item.activeClass)?.student.id;
  const firstClassRef = activeStudents.find((item) => item.activeClass)?.activeClass?.id;
  return (
- <main className=" min-h-screen p-4 text-[var(--ink)] md:p-8">
+ <main className="min-h-screen px-3 py-4 text-[var(--ink)] sm:p-4 md:p-8">
  <div className="mx-auto max-w-7xl">
  <header className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_2px_24px_rgba(26,75,107,0.06)] text-[var(--ink)]">
-   <div className="grid gap-8 p-6 md:grid-cols-[1.4fr_0.8fr] md:p-10">
+   <div className="grid gap-6 p-4 sm:p-6 md:grid-cols-[1.4fr_0.8fr] md:gap-8 md:p-10">
      <div>
        <Pill tone="border-[var(--accent)] bg-[rgba(37,99,235,0.08)] text-[var(--accent)]">Gentosai SchoolOS MVP</Pill>
-       <h1 className="mt-6 max-w-4xl text-5xl font-bold leading-[0.95] tracking-tight text-[var(--ocean)] md:text-7xl">
+       <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-[1.04] tracking-tight text-[var(--ocean)] sm:text-4xl md:mt-6 md:text-7xl md:leading-[0.95]">
          Satu data sekolah, satu dashboard keputusan.
        </h1>
-       <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--muted)]">
+       <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--muted)] md:mt-6 md:text-lg md:leading-8">
          Prototype lokal untuk mengelola siswa, guru, kelas, absensi, nilai, rapor sederhana, SPP, dan early warning system.
        </p>
-       <div className="mt-8 grid gap-3 sm:grid-cols-3">
+       <div className="mt-6 grid gap-3 sm:grid-cols-3 md:mt-8">
          <div className="rounded-xl bg-[var(--paper)] p-4">
            <p className="text-xs uppercase tracking-[0.12em] text-[var(--azure)] font-semibold">Sekolah</p>
            <p className="mt-1.5 font-bold text-[var(--ocean)]">{school.name}</p>
@@ -278,8 +278,8 @@ export default async function Home({
 
  <aside className="rounded-xl bg-[var(--paper)] p-5">
    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--azure)]">Sesi aktif</p>
-   <h2 className="mt-2 text-3xl font-bold text-[var(--ocean)]">{currentUser.name}</h2>
-   <p className="mt-1 text-sm text-[var(--muted)]">{currentUser.email}</p>
+   <h2 className="mt-2 text-2xl font-bold text-[var(--ocean)] md:text-3xl">{currentUser.name}</h2>
+   <p className="mt-1 break-all text-sm text-[var(--muted)]">{currentUser.email}</p>
    <Pill tone="mt-4 border-[var(--accent)] bg-[rgba(37,99,235,0.08)] text-[var(--accent)]">{roleLabels[activeRole]}</Pill>
    <p className="mt-4 text-sm leading-6 text-[var(--muted)]">{roleDescriptions[activeRole]}</p>
    <form action={logout} className="mt-5">
@@ -296,15 +296,15 @@ export default async function Home({
  </div>
  </header>
 
- <nav className="sticky top-0 z-10 mt-6 rounded-2xl border border-[var(--line)] bg-white/95 p-3 shadow-[0_2px_20px_rgba(26,75,107,0.08)] backdrop-blur">
-   <div className="flex gap-2 overflow-x-auto pb-1">
+ <nav className="sticky top-2 z-10 mt-4 rounded-2xl border border-[var(--line)] bg-white/95 p-2 shadow-[0_2px_20px_rgba(26,75,107,0.08)] backdrop-blur md:mt-6 md:p-3">
+   <div className="flex snap-x gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
      {SECTIONS.map((section) => {
        const isActive = section.id === activeSection;
        return (
          <a
            key={section.id}
            href={section.id === "overview" ? "/" : `/?section=${section.id}`}
-           className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-bold transition ${isActive ? "bg-[var(--accent)] text-white shadow-[0_8px_20px_rgba(37,99,235,0.18)]" : "bg-[var(--paper)] text-[var(--ocean)] hover:bg-[var(--pale)]"}`}
+           className={`snap-start whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold transition sm:px-4 sm:py-2.5 sm:text-sm ${isActive ? "bg-[var(--accent)] text-white shadow-[0_8px_20px_rgba(37,99,235,0.18)]" : "bg-[var(--paper)] text-[var(--ocean)] hover:bg-[var(--pale)]"}`}
          >
            {section.label}
          </a>
