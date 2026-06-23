@@ -1,19 +1,20 @@
 # Gentosai SchoolOS
 
-Gentosai SchoolOS adalah prototype lokal untuk sistem operasional sekolah: data siswa, guru, kelas, absensi, jadwal, nilai, rapor sederhana, SPP, dashboard kepala sekolah, dan early warning system.
+Gentosai SchoolOS adalah aplikasi manajemen sekolah berbasis web: data siswa, guru, kelas, absensi, jadwal, nilai, rapor, SPP, dashboard kepala sekolah, dan early warning system.
+
+**Siap deploy ke Vercel dengan Supabase Postgres.**
 
 ## Stack
 
 - Next.js 16 App Router
 - TypeScript
 - Tailwind CSS 4
-- Prisma 7
-- SQLite untuk development lokal
-- Driver adapter `@prisma/adapter-better-sqlite3`
+- Prisma 7 + PostgreSQL (Supabase)
+- Driver adapter `@prisma/adapter-pg`
 
 ## Fitur MVP Saat Ini
 
-- Dashboard sekolah real-time dari database lokal.
+- Dashboard sekolah real-time dari Supabase Postgres.
 - Login dengan password hash dan session cookie HTTP-only.
 - Akun demo per role: kepala sekolah, admin, guru, keuangan, BK, orang tua, siswa.
 - Data master: siswa, wali, guru, kelas, mapel.
@@ -25,6 +26,8 @@ Gentosai SchoolOS adalah prototype lokal untuk sistem operasional sekolah: data 
 - Jadwal pelajaran, pengumuman, catatan BK, dan ringkasan rapor sederhana.
 
 ## Cara Menjalankan Lokal
+
+Pastikan `.env` berisi `DATABASE_URL` dan `DIRECT_URL` Supabase Postgres.
 
 ```bash
 cd /home/acer/gentosai
@@ -62,20 +65,21 @@ alya.putri@siswa.gentosai.sch.id
 npm run dev       # menjalankan server development
 npm run build     # validasi production build
 npm run lint      # cek linting
-npm run db:push   # sinkron schema Prisma ke SQLite
-npm run db:seed   # reset dan isi data demo
+npm run db:push   # sinkron schema Prisma ke Supabase Postgres
+npm run db:seed   # reset dan isi data demo ke Postgres
 npm run db:studio # buka Prisma Studio
 ```
 
-## Database Lokal
+## Database
 
-- File database: `dev.db`
-- Konfigurasi environment: `.env`
+- Hosting: Supabase PostgreSQL (project: `omzhzhimyzsntoegvtku`, region: ap-southeast-1)
+- Koneksi: Transaction pooler (6543) untuk app, Session mode (5432) untuk migrasi
+- `DATABASE_URL` / `DIRECT_URL` di `.env`
 - Contoh environment: `.env.example`
-- Schema utama: `prisma/schema.prisma`
+- Schema: `prisma/schema.prisma`
 - Data demo: `prisma/seed.cjs`
 
-Untuk reset data demo:
+Untuk reset data:
 
 ```bash
 npm run db:push

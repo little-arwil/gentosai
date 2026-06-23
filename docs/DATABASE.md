@@ -1,6 +1,6 @@
 # Database Gentosai MVP
 
-Database MVP dirancang sebagai fondasi SchoolOS. Saat development lokal memakai SQLite, tetapi struktur dibuat supaya mudah dipindah ke PostgreSQL.
+Database MVP dirancang sebagai fondasi SchoolOS dan saat ini berjalan di Supabase PostgreSQL untuk mendukung deployment Vercel.
 
 ## Entitas Inti
 
@@ -44,12 +44,12 @@ Database MVP dirancang sebagai fondasi SchoolOS. Saat development lokal memakai 
 - `AttendanceStatus`: hadir, sakit, izin, alpha, terlambat.
 - `PaymentStatus`: belum bayar, cicilan, lunas, tunggakan.
 
-## Migrasi ke PostgreSQL
+## Status PostgreSQL
 
-Saat siap production:
+Migrasi SQLite → PostgreSQL sudah dilakukan.
 
-1. Ubah datasource provider dari `sqlite` ke `postgresql`.
-2. Ganti `DATABASE_URL` ke URL PostgreSQL.
-3. Jalankan migrasi Prisma.
-4. Review tipe data uang; untuk nominal besar bisa pakai `BigInt` atau decimal sesuai kebutuhan.
-5. Tambahkan index untuk query dashboard, terutama `schoolId`, `studentId`, `classId`, `semesterId`, `dueDate`, dan `status`.
+1. `prisma/schema.prisma` memakai provider `postgresql`.
+2. Runtime memakai `DATABASE_URL` Supabase transaction pooler.
+3. Prisma schema push/migrasi memakai `DIRECT_URL` Supabase session pooler.
+4. Seed data demo tersimpan di Supabase.
+5. Tahap berikutnya: review tipe data uang untuk nominal besar (`BigInt`/decimal), tambah index query dashboard, dan hardening RLS/API exposure bila nanti tabel dipakai lewat Supabase Data API.

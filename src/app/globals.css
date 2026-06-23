@@ -1,25 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #16211f;
-  --muted: #66736f;
-  --paper: #fff9ed;
-  --surface: #fffffb;
-  --line: #eadfcb;
-  --forest: #123f38;
-  --moss: #6f8f52;
-  --clay: #c06437;
-  --sun: #f3bd42;
-  --sky: #87b9c7;
-  --danger: #b6423a;
-  --font-display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
-  --font-body: "Aptos", "Segoe UI", sans-serif;
+  --ink: #1a2634;
+  --muted: #5e6f8d;
+  --paper: #f3f7fc;
+  --surface: #ffffff;
+  --line: #dae1f0;
+  --ocean: #1a4b6b;
+  --sky: #9bc3e0;
+  --azure: #5b97d4;
+  --pale: #c7d9f0;
+  --sun: #f0cb5a;
+  --danger: #d15b5b;
+  --accent: #2563eb;
 }
 
 @theme inline {
   --color-background: var(--paper);
   --color-foreground: var(--ink);
-  --font-sans: var(--font-body);
 }
 
 * {
@@ -34,12 +32,9 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at top left, rgba(243, 189, 66, 0.26), transparent 32rem),
-    radial-gradient(circle at 85% 12%, rgba(135, 185, 199, 0.34), transparent 28rem),
-    linear-gradient(135deg, #fff9ed 0%, #f5efe2 46%, #e9f0e3 100%);
+  background: linear-gradient(135deg, #f7faff 0%, #ebf2fa 50%, #e2edf5 100%);
   color: var(--ink);
-  font-family: var(--font-body);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 button,
@@ -55,37 +50,6 @@ a {
 }
 
 ::selection {
-  background: var(--sun);
-  color: var(--forest);
-}
-
-.shell-grid {
-  background-image:
-    linear-gradient(rgba(18, 63, 56, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(18, 63, 56, 0.05) 1px, transparent 1px);
-  background-size: 36px 36px;
-}
-
-.display-font {
-  font-family: var(--font-display);
-}
-
-.card-shadow {
-  box-shadow: 0 24px 80px rgba(18, 63, 56, 0.12);
-}
-
-.lift-in {
-  animation: lift-in 700ms ease both;
-}
-
-@keyframes lift-in {
-  from {
-    opacity: 0;
-    transform: translateY(18px) scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  background: var(--sky);
+  color: var(--ocean);
 }
