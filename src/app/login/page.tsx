@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { login } from "@/app/auth-actions";
 import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -59,7 +58,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
           ) : null}
 
-          <form action={login} className="mt-8 grid gap-5">
+          <form action="/api/login" method="post" className="mt-8 grid gap-5">
             <label className="grid gap-2 text-sm font-semibold text-[var(--ocean)]">
               Email
               <input
