@@ -1,4 +1,6 @@
 import type { AttendanceStatus, PaymentStatus, Prisma, UserRole } from "@prisma/client";
+import type { DashboardSection } from "./dashboard-sections";
+import { SECTIONS } from "./dashboard-sections";
 import { redirect } from "next/navigation";
 import {
  createClass,
@@ -118,7 +120,14 @@ function Panel({ children, kicker, title }: { children: React.ReactNode; kicker:
  );
 }
 
-export default async function Home() {
+export default async function Home({
+ searchParams,
+}: {
+ searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+ const params = await searchParams;
+ const requestedSection = Array.isArray(params.section) ? params.section[0] : params.section;
+ const activeSection: DashboardSection = SECTIONS.some((section) => section.id === requestedSection) ? requestedSection as DashboardSection : "overview";
  const auth = await getCurrentUser();
  if (!auth) {
  redirect("/login");
@@ -287,6 +296,25 @@ export default async function Home() {
  </div>
  </header>
 
+ <nav className="sticky top-0 z-10 mt-6 rounded-2xl border border-[var(--line)] bg-white/95 p-3 shadow-[0_2px_20px_rgba(26,75,107,0.08)] backdrop-blur">
+   <div className="flex gap-2 overflow-x-auto pb-1">
+     {SECTIONS.map((section) => {
+       const isActive = section.id === activeSection;
+       return (
+         <a
+           key={section.id}
+           href={section.id === "overview" ? "/" : `/?section=${section.id}`}
+           className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-bold transition ${isActive ? "bg-[var(--accent)] text-white shadow-[0_8px_20px_rgba(37,99,235,0.18)]" : "bg-[var(--paper)] text-[var(--ocean)] hover:bg-[var(--pale)]"}`}
+         >
+           {section.label}
+         </a>
+       );
+     })}
+   </div>
+ </nav>
+
+ {activeSection === "overview" ? (
+ <>
  <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
  <MetricCard label="Siswa aktif" value={String(students.length)} hint={`${classes.length} kelas aktif dalam sistem demo`} accent="bg-[var(--accent)]" />
  <MetricCard label="Kehadiran hari ini" value={`${formatPercent(attendanceRate)}%`} hint={`${presentCount} dari ${totalAttendance || students.length} absensi tercatat`} accent="bg-[var(--azure)]" />
@@ -336,7 +364,10 @@ export default async function Home() {
  </div>
  </Panel>
  </section>
+ </>
+ ) : null}
 
+ {activeSection === "input" ? (
  <section className="mt-6 grid gap-6 xl:grid-cols-3">
  <Panel kicker="Quick input" title="Tambah siswa">
  <form action={createStudent} className="grid gap-4">
@@ -403,8 +434,11 @@ export default async function Home() {
  </form>
  </Panel>
  </section>
+ ) : null}
 
+ {(activeSection === "operations" || activeSection === "academics" || activeSection === "finance") ? (
  <section className="mt-6 grid gap-6 xl:grid-cols-3">
+ {activeSection === "operations" ? (
  <Panel kicker="Operasional" title="Input absensi">
  <form action={recordAttendance} className="grid gap-4">
  <Field label="Siswa">
@@ -426,7 +460,8 @@ export default async function Home() {
  <Button>Simpan absensi</Button>
  </form>
  </Panel>
-
+ ) : null}
+ {activeSection === "academics" ? (
  <Panel kicker="Akademik" title="Input nilai">
  <form action={createGrade} className="grid gap-4">
  <Field label="Siswa">
@@ -454,6 +489,8 @@ export default async function Home() {
  <Button>Simpan nilai</Button>
  </form>
  </Panel>
+ ) : null}
+ {activeSection === "finance" ? (
  <Panel kicker="Keuangan" title="Buat tagihan SPP">
  <form action={createInvoice} className="grid gap-4">
  <Field label="Siswa">
@@ -474,9 +511,13 @@ export default async function Home() {
  <Button>Buat tagihan</Button>
  </form>
  </Panel>
+ ) : null}
  </section>
+ ) : null}
 
+ {(activeSection === "finance" || activeSection === "operations") ? (
  <section className="mt-6 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+ {activeSection === "finance" ? (
  <Panel kicker="Keuangan" title="Catat pembayaran">
  <form action={recordPayment} className="grid gap-4">
  <Field label="Tagihan">
@@ -497,7 +538,8 @@ export default async function Home() {
  <Button>Simpan pembayaran</Button>
  </form>
  </Panel>
-
+ ) : null}
+ {activeSection === "operations" ? (
  <Panel kicker="Jadwal" title="Jadwal pelajaran aktif">
  <div className="overflow-x-auto">
  <table className="w-full min-w-[720px] border-separate border-spacing-y-2 text-left text-sm">
@@ -519,8 +561,11 @@ export default async function Home() {
  </table>
  </div>
  </Panel>
+ ) : null}
  </section>
+ ) : null}
 
+ {activeSection === "data" ? (
  <section className="mt-6 grid gap-6 xl:grid-cols-2">
  <Panel kicker="Data master" title="Siswa aktif">
  <div className="overflow-x-auto">
@@ -569,8 +614,11 @@ export default async function Home() {
  </div>
  </Panel>
  </section>
+ ) : null}
 
+ {(activeSection === "academics" || activeSection === "finance") ? (
  <section className="mt-6 grid gap-6 xl:grid-cols-2">
+ {activeSection === "academics" ? (
  <Panel kicker="Akademik" title="Nilai dan rapor sederhana">
  <div className="grid gap-3">
  {grades.map((grade) => (
@@ -588,7 +636,8 @@ export default async function Home() {
  </div>
  </div>
  </Panel>
-
+ ) : null}
+ {activeSection === "finance" ? (
  <Panel kicker="Keuangan" title="Tagihan dan pembayaran">
  <div className="grid gap-3">
  {invoices.slice(0, 8).map((invoice) => (
@@ -608,8 +657,11 @@ export default async function Home() {
  ))}
  </div>
  </Panel>
+ ) : null}
  </section>
+ ) : null}
 
+ {activeSection === "bk" ? (
  <section id="bk" className="mt-6">
  <Panel kicker="BK dan karakter" title="Catatan siswa terbaru">
  <div className="grid gap-3 md:grid-cols-3">
@@ -627,9 +679,10 @@ export default async function Home() {
  </div>
  </Panel>
  </section>
+ ) : null}
 
  <footer className="py-10 text-center text-sm font-bold text-[var(--muted)]">
- Gentosai MVP lokal. Siap dipush ke GitHub setelah repo dan auth GitHub disiapkan.
+ Gentosai MVP — deploy ke Vercel dengan Supabase Postgres
  </footer>
  </div>
  </main>
